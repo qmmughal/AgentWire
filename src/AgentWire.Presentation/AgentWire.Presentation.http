@@ -1,0 +1,6 @@
+@AgentWire.Presentation_HostAddress = http://localhost:5102
+
+GET {{AgentWire.Presentation_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

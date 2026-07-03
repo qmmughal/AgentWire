@@ -1,0 +1,73 @@
+version: '3.8'
+
+services:
+  gateway:
+    build: 
+      context: ./src
+      dockerfile: AgentWire.Gateway/Dockerfile
+    ports:
+      - "8080:8080"
+    depends_on:
+      - redis
+      - rabbitmq
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - RabbitMQ__Host=rabbitmq
+      - Redis__Configuration=redis:6379
+
+  collector:
+    build:
+      context: ./src
+      dockerfile: AgentWire.Collector/Dockerfile
+    depends_on:
+      - rabbitmq
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - RabbitMQ__Host=rabbitmq
+
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_USER: agentwire
+      POSTGRES_PASSWORD: password123
+      POSTGRES_DB: agentwire
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  clickhouse:
+    image: clickhouse/clickhouse-server:23.8
+    ports:
+      - "8123:8123"
+      - "9000:9000"
+    volumes:
+      - chdata:/var/lib/clickhouse
+    environment:
+      CLICKHOUSE_DB: agentwire_metrics
+      CLICKHOUSE_USER: agentwire
+      CLICKHOUSE_PASSWORD: password123
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+
+  frontend:
+    build:
+      context: ./src/Client/Web
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - NEXT_PUBLIC_API_URL=http://localhost:8080
+
+volumes:
+  pgdata:
+  chdata:

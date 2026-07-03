@@ -1,0 +1,52 @@
+name: AgentWire CI/CD
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build-and-test-dotnet:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '9.0.x' # Update to 10.0 when available
+    - name: Restore dependencies
+      run: dotnet restore src/AgentWire.sln
+    - name: Build
+      run: dotnet build src/AgentWire.sln --no-restore
+    - name: Test
+      run: dotnet test src/AgentWire.sln --no-build --verbosity normal
+
+  build-and-test-frontend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: src/Client/Web
+    steps:
+    - uses: actions/checkout@v4
+    - name: Use Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20.x'
+    - name: Install dependencies
+      run: npm ci
+    - name: Lint
+      run: npm run lint
+    - name: Build
+      run: npm run build
+
+  security-scan:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Run CodeQL Analysis
+      uses: github/codeql-action/init@v3
+      with:
+        languages: csharp, javascript
+    - name: Perform CodeQL Analysis
+      uses: github/codeql-action/analyze@v3
