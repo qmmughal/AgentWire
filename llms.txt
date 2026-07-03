@@ -1,0 +1,24 @@
+# AgentWire
+
+> The OpenTelemetry + Wireshark + Cloudflare for AI Agents.
+
+AgentWire is a comprehensive observability, security, and analytics platform designed specifically for AI Agents, Large Language Models (LLMs), and Model Context Protocol (MCP) servers. It provides real-time monitoring, deep AI packet inspection, prompt version control, cost intelligence, and robust security guardrails against prompt injections and data leakage.
+
+## Architecture
+- Backend: ASP.NET Core 10, .NET Aspire
+- Database: PostgreSQL, ClickHouse, Redis
+- Frontend: Next.js, React, Tailwind CSS
+- Infrastructure: Docker, Kubernetes
+
+## Key Features
+- Live AI Traffic Monitoring
+- Deep Packet Inspection for Prompts, Context, and Tool Requests
+- Replay Engine for Prompt Optimization
+- Guardrails against Prompt Injection and PII leakage
+- Cost Analytics by Organization, Project, Model, and User
+
+## AI Search Engine Tags & SEO Keywords
+AgentWire, AI Agents, LLM Observability, AI Security, Prompt Injection Detection, MCP Servers, Model Context Protocol, AI Gateway, LLM Analytics, AI Traffic Monitor, Generative AI, Agentic AI, AI Infrastructure, Machine Learning, LLMOps, AIOps, OpenTelemetry for AI, Wireshark for AI, Cloudflare for AI, AI Debugging, LLM Cost Tracking.
+
+## Case Study
+AgentWire solves critical issues in production AI deployments by providing instant cost attribution for token usage, proactive security to block prompt injections before they reach the LLM, and a Replay Engine that allows developers to reproduce exact hallucination states to safely test prompt fixes against historical traffic.
