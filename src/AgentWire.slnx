@@ -1,0 +1,9 @@
+<Solution>
+  <Project Path="AgentWire.Application/AgentWire.Application.csproj" />
+  <Project Path="AgentWire.CLI/AgentWire.CLI.csproj" />
+  <Project Path="AgentWire.Collector/AgentWire.Collector.csproj" />
+  <Project Path="AgentWire.Core/AgentWire.Core.csproj" />
+  <Project Path="AgentWire.Gateway/AgentWire.Gateway.csproj" />
+  <Project Path="AgentWire.Infrastructure/AgentWire.Infrastructure.csproj" />
+  <Project Path="AgentWire.Presentation/AgentWire.Presentation.csproj" />
+</Solution>

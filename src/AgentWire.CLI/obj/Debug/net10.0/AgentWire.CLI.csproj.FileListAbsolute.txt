@@ -1,0 +1,17 @@
+D:\aiproducts\Antigravity\github-codes\AgentWire\src\AgentWire.CLI\bin\Debug\net10.0\AgentWire.CLI.exe
+D:\aiproducts\Antigravity\github-codes\AgentWire\src\AgentWire.CLI\bin\Debug\net10.0\AgentWire.CLI.deps.json
+D:\aiproducts\Antigravity\github-codes\AgentWire\src\AgentWire.CLI\bin\Debug\net10.0\AgentWire.CLI.runtimeconfig.json
+D:\aiproducts\Antigravity\github-codes\AgentWire\src\AgentWire.CLI\bin\Debug\net10.0\AgentWire.CLI.dll
+D:\aiproducts\Antigravity\github-codes\AgentWire\src\AgentWire.CLI\bin\Debug\net10.0\AgentWire.CLI.pdb
+D:\aiproducts\Antigravity\github-codes\AgentWire\src\AgentWire.CLI\bin\Debug\net10.0\AgentWire.CLI.xml
+D:\aiproducts\Antigravity\github-codes\AgentWire\src\AgentWire.CLI\obj\Debug\net10.0\AgentWire.CLI.GeneratedMSBuildEditorConfig.editorconfig
+D:\aiproducts\Antigravity\github-codes\AgentWire\src\AgentWire.CLI\obj\Debug\net10.0\AgentWire.CLI.AssemblyInfoInputs.cache
+D:\aiproducts\Antigravity\github-codes\AgentWire\src\AgentWire.CLI\obj\Debug\net10.0\AgentWire.CLI.AssemblyInfo.cs
+D:\aiproducts\Antigravity\github-codes\AgentWire\src\AgentWire.CLI\obj\Debug\net10.0\AgentWire.CLI.csproj.CoreCompileInputs.cache
+D:\aiproducts\Antigravity\github-codes\AgentWire\src\AgentWire.CLI\obj\Debug\net10.0\AgentWire.CLI.sourcelink.json
+D:\aiproducts\Antigravity\github-codes\AgentWire\src\AgentWire.CLI\obj\Debug\net10.0\AgentWire.CLI.dll
+D:\aiproducts\Antigravity\github-codes\AgentWire\src\AgentWire.CLI\obj\Debug\net10.0\refint\AgentWire.CLI.dll
+D:\aiproducts\Antigravity\github-codes\AgentWire\src\AgentWire.CLI\obj\Debug\net10.0\AgentWire.CLI.xml
+D:\aiproducts\Antigravity\github-codes\AgentWire\src\AgentWire.CLI\obj\Debug\net10.0\AgentWire.CLI.pdb
+D:\aiproducts\Antigravity\github-codes\AgentWire\src\AgentWire.CLI\obj\Debug\net10.0\AgentWire.CLI.genruntimeconfig.cache
+D:\aiproducts\Antigravity\github-codes\AgentWire\src\AgentWire.CLI\obj\Debug\net10.0\ref\AgentWire.CLI.dll

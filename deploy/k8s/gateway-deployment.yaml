@@ -1,0 +1,43 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: agentwire-gateway
+  labels:
+    app: agentwire-gateway
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: agentwire-gateway
+  template:
+    metadata:
+      labels:
+        app: agentwire-gateway
+    spec:
+      containers:
+      - name: gateway
+        image: agentwire/gateway:latest
+        ports:
+        - containerPort: 8080
+        env:
+        - name: ASPNETCORE_ENVIRONMENT
+          value: "Production"
+        resources:
+          requests:
+            cpu: "250m"
+            memory: "256Mi"
+          limits:
+            cpu: "1000m"
+            memory: "1Gi"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: agentwire-gateway-svc
+spec:
+  type: LoadBalancer
+  ports:
+  - port: 80
+    targetPort: 8080
+  selector:
+    app: agentwire-gateway
