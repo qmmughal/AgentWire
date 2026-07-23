@@ -26,6 +26,12 @@ AgentWire is in **active MVP development**. The runnable path today is a local i
 
 ---
 
+## Monetization plan
+
+The MVP above stays free and open source — that's how a project earns the kind of trust [ckeditor5-blazor](https://github.com/qmmughal/ckeditor5-blazor) built organically over several years. The plan is to keep it that way for the core ingest/cost API, and eventually offer a **hosted, managed tier** covering the parts of the roadmap that are genuinely expensive to self-host well: the ClickHouse analytics store, the security scanner, and multi-tenant SaaS operations (see the "Enterprise Edition" section of [docs/roadmap.md](docs/roadmap.md)).
+
+No hosted beta or waitlist exists yet — this section is a heads-up, not a pitch. It'll get a real signup link once there's something to sign up for.
+
 ## About
 
 AgentWire sits between users, agents, and LLM/MCP providers so you can **monitor, inspect, attribute cost, and (eventually) secure and replay** AI traffic — similar in spirit to what Wireshark and edge gateways do for networks.
