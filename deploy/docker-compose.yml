@@ -1,30 +1,10 @@
-version: '3.8'
+# Optional local infrastructure for upcoming AgentWire services.
+# MVP API uses SQLite — these containers are not required for Getting Started.
+#
+# From repo root:
+#   docker compose -f deploy/docker-compose.yml up -d
 
 services:
-  gateway:
-    build: 
-      context: ./src
-      dockerfile: AgentWire.Gateway/Dockerfile
-    ports:
-      - "8080:8080"
-    depends_on:
-      - redis
-      - rabbitmq
-    environment:
-      - ASPNETCORE_ENVIRONMENT=Development
-      - RabbitMQ__Host=rabbitmq
-      - Redis__Configuration=redis:6379
-
-  collector:
-    build:
-      context: ./src
-      dockerfile: AgentWire.Collector/Dockerfile
-    depends_on:
-      - rabbitmq
-    environment:
-      - ASPNETCORE_ENVIRONMENT=Development
-      - RabbitMQ__Host=rabbitmq
-
   postgres:
     image: postgres:15-alpine
     environment:
@@ -58,15 +38,6 @@ services:
     ports:
       - "5672:5672"
       - "15672:15672"
-
-  frontend:
-    build:
-      context: ./src/Client/Web
-      dockerfile: Dockerfile
-    ports:
-      - "3000:3000"
-    environment:
-      - NEXT_PUBLIC_API_URL=http://localhost:8080
 
 volumes:
   pgdata:
