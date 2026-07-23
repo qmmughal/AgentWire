@@ -1,81 +1,122 @@
 <div align="center">
-  <h1>🚀 AgentWire</h1>
-  <p><strong>The Ultimate Observability, Security, and Analytics Platform for AI Agents</strong></p>
-  <p><em>OpenTelemetry + Wireshark + Cloudflare for AI Agents, LLMs, and MCP Servers</em></p>
+  <h1>AgentWire</h1>
+  <p><strong>Observability, security, and cost analytics for AI agents, LLMs, and MCP servers</strong></p>
+  <p><em>OpenTelemetry-inspired traffic inspection for the agentic stack — status: <strong>Alpha / MVP</strong></em></p>
 
   <p>
     <a href="https://github.com/qmmughal/AgentWire/stargazers"><img src="https://img.shields.io/github/stars/qmmughal/AgentWire?style=for-the-badge" alt="Stars Badge"/></a>
     <a href="https://github.com/qmmughal/AgentWire/network/members"><img src="https://img.shields.io/github/forks/qmmughal/AgentWire?style=for-the-badge" alt="Forks Badge"/></a>
     <a href="https://github.com/qmmughal/AgentWire/issues"><img src="https://img.shields.io/github/issues/qmmughal/AgentWire?style=for-the-badge" alt="Issues Badge"/></a>
-    <a href="https://github.com/qmmughal/AgentWire/pulls"><img src="https://img.shields.io/github/issues-pr/qmmughal/AgentWire?style=for-the-badge" alt="Pull Requests Badge"/></a>
-    <a href="https://github.com/qmmughal/AgentWire/blob/master/LICENSE"><img src="https://img.shields.io/github/license/qmmughal/AgentWire?style=for-the-badge" alt="License Badge"/></a>
+    <a href="https://github.com/qmmughal/AgentWire/blob/main/LICENSE"><img src="https://img.shields.io/github/license/qmmughal/AgentWire?style=for-the-badge" alt="License Badge"/></a>
   </p>
 </div>
 
 ---
 
-## 📖 About AgentWire
+## Status
 
-AgentWire is a cutting-edge **observability and security gateway** specifically designed for modern AI Agents, Large Language Models (LLMs), and Model Context Protocol (MCP) servers. Just as Wireshark inspects network packets and Cloudflare provides a protective edge layer, AgentWire sits between your users, agents, and external services to monitor, inspect, analyze, secure, replay, and optimize every single AI interaction.
+AgentWire is in **active MVP development**. The runnable path today is a local ingestion API + packet/cost endpoints (SQLite). The full gateway / ClickHouse / security / replay stack described in the architecture docs is **planned** — see [docs/roadmap.md](docs/roadmap.md).
 
-Whether you're dealing with prompt injection attacks, skyrocketing LLM API costs, or debugging complex multi-agent workflows, AgentWire provides the real-time visibility and control you need to scale your AI infrastructure with confidence.
-
----
-
-## ✨ Features
-
-- 🚦 **Live Traffic Monitor**: Real-time dashboard similar to a network operations center.
-- 🕵️‍♂️ **AI Packet Inspector**: Deep inspection of every prompt, context, memory, tool request, and model output.
-- ⏪ **Replay Engine**: Replay any execution with different prompts, models, or temperatures to debug or optimize.
-- 📚 **Prompt Version Control**: Track history, diffs, and success rates of all prompts.
-- 🛡️ **Security & Guardrails**: Detect prompt injections, sensitive data leakage (PII/PHI), and malicious MCP server behavior.
-- 💸 **Cost Intelligence**: Detailed cost analytics broken down by organization, project, model, and user.
-- 🔍 **Advanced Search**: Global search to find specific executions, errors, semantic matches, or security events.
-- 🔌 **Universal Plugin System**: Seamless integration with OpenAI, Anthropic, Gemini, local models, and MCP Servers.
+| Available now (MVP) | Planned (roadmap) |
+|---|---|
+| Trace ingest `POST /v1/traces` | YARP gateway + collector microservices |
+| Packet list `GET /v1/packets` | ClickHouse analytics store |
+| Cost rollup `GET /v1/analytics/costs` | Prompt injection scanner, replay engine |
+| Optional Next.js dashboard scaffold | Multi-tenant SaaS / enterprise edition |
 
 ---
 
-## 💡 Case Study: How AgentWire Solves Real-World AI Problems
+## About
 
-### The Problem
-*Company X* deployed a powerful autonomous customer support agent. Everything worked perfectly in testing, but in production, they faced three major crises:
-1. **Unpredictable Costs:** API bills skyrocketed without clear attribution. Was it user spam, inefficient loops, or a runaway agent?
-2. **Security Vulnerabilities:** A user successfully executed a prompt injection attack, tricking the agent into leaking internal system instructions.
-3. **Debugging Nightmares:** When an agent gave a hallucinatory response, developers had no way to trace the exact context, tool calls, and LLM state at that specific millisecond.
-
-### The AgentWire Solution
-By routing their agent traffic through AgentWire, *Company X* transformed their operations:
-- **Instant Cost Attribution:** AgentWire's Cost Intelligence pinpointed a specific looping tool call that was burning tokens, saving them 40% on API costs overnight.
-- **Proactive Security:** The Security Scanner automatically intercepted and blocked prompt injections before they even reached the LLM, keeping their system instructions secure.
-- **One-Click Replays:** Developers used the Replay Engine to reproduce the exact state of the hallucination, tweaked the system prompt, and tested the fix instantly against historical traffic.
-
-**Result:** A secure, cost-effective, and highly predictable AI deployment.
+AgentWire sits between users, agents, and LLM/MCP providers so you can **monitor, inspect, attribute cost, and (eventually) secure and replay** AI traffic — similar in spirit to what Wireshark and edge gateways do for networks.
 
 ---
 
-## 🏗️ Architecture
+## Getting Started (MVP — local)
 
-AgentWire is built on a scalable, cloud-native architecture capable of handling massive throughput:
-- **Backend**: ASP.NET Core 10, .NET Aspire
-- **Database**: PostgreSQL (Metadata) + ClickHouse (High-volume packet storage) + Redis (Caching)
-- **Frontend**: Next.js, React, Tailwind CSS, React Flow, Apache ECharts
-- **Infrastructure**: Docker, Kubernetes, Helm, Terraform
+### Prerequisites
 
-See [docs/architecture.md](docs/architecture.md) for more details.
+- [.NET 10 SDK](https://dotnet.microsoft.com/download/dotnet/10.0)
+- Optional: Node.js 18+ for the dashboard scaffold under `src/Client/dashboard`
+
+### 1. Clone and run the API
+
+```bash
+git clone https://github.com/qmmughal/AgentWire.git
+cd AgentWire
+
+dotnet run --project src/AgentWire.Presentation
+```
+
+By default the API listens on **http://localhost:5102** (see `launchSettings.json`).
+
+### 2. Ingest a sample trace
+
+```bash
+curl -X POST http://localhost:5102/v1/traces \
+  -H "Content-Type: application/json" \
+  -d "{
+    \"traceId\": \"demo-001\",
+    \"agentId\": \"support-bot\",
+    \"modelProvider\": \"openai\",
+    \"modelName\": \"gpt-4o-mini\",
+    \"systemPrompt\": \"You are a helpful assistant.\",
+    \"userPrompt\": \"Hello\",
+    \"llmResponse\": \"Hi there!\",
+    \"promptTokens\": 12,
+    \"completionTokens\": 8,
+    \"latencyMs\": 220
+  }"
+```
+
+### 3. Inspect packets and costs
+
+```bash
+curl http://localhost:5102/v1/packets
+curl http://localhost:5102/v1/analytics/costs
+```
+
+### 4. Optional — dashboard scaffold
+
+```bash
+cd src/Client/dashboard
+npm install
+npm run dev
+```
+
+Open http://localhost:3000 (configure `NEXT_PUBLIC_API_URL` to point at the API if needed).
+
+### 5. Optional — local infrastructure only
+
+Postgres, Redis, RabbitMQ, and ClickHouse can be started for upcoming services:
+
+```bash
+docker compose -f deploy/docker-compose.yml up -d
+```
+
+App container builds are not wired yet (Dockerfiles pending). Use `dotnet run` for the MVP API.
 
 ---
 
-## 🚀 Getting Started
+## Architecture
 
-*(Documentation coming soon)*
+Target architecture (event-driven gateway + collector + analytics):
+
+- **Backend**: ASP.NET Core 10
+- **Storage (planned)**: PostgreSQL (metadata) + ClickHouse (packets) + Redis
+- **Frontend**: Next.js dashboard scaffold
+- **Infra sketches**: Docker Compose, Kubernetes, Terraform under `deploy/`
+
+Details: [docs/architecture.md](docs/architecture.md) · Roadmap: [docs/roadmap.md](docs/roadmap.md)
 
 ---
 
-## 🏷️ Tags & Keywords
-`AI Agents` `LLM Observability` `AI Security` `Prompt Injection` `MCP Servers` `Model Context Protocol` `AI Gateway` `LLM Analytics` `AI Traffic Monitor` `Generative AI` `Agentic AI` `AI Infrastructure` `Machine Learning` `LLMOps` `AIOps` `OpenTelemetry for AI` `Wireshark for AI` `Cloudflare for AI`
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md). Issues that match MVP epics are sketched in [docs/issues-mvp.md](docs/issues-mvp.md).
 
 ---
 
-## 📝 License
+## License
 
-This project is licensed under the Apache 2.0 License - see the [LICENSE](LICENSE) file for details.
+Apache 2.0 — see [LICENSE](LICENSE).
