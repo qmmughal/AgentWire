@@ -36,13 +36,17 @@ AgentWire uses a polyglot persistence model.
 - **Asynchronous Processing**: Ingestion is decoupled from processing. Clients receive a `202 Accepted` immediately, and packets are processed asynchronously.
 - **Batch Inserts**: ClickHouse is optimized for batch inserts. The Traffic Analyzer batches packets before writing to ClickHouse, allowing for tens of thousands of inserts per second.
 
-## Security Architecture
+## Security & Governance Architecture
 
+AgentWire includes native, open-source governance and enterprise security controls out of the box:
 - **Data Masking**: PII and sensitive data can be masked before storage using customizable rules.
-- **Prompt Injection Detection**: Built-in rules to detect common injection patterns.
-- **Tenant Isolation**: PostgreSQL uses Row-Level Security (RLS) to ensure data isolation between organizations.
+- **Prompt Injection Detection**: Built-in rules to detect common injection patterns and malicious payloads.
+- **Tenant Isolation & RBAC**: PostgreSQL uses Row-Level Security (RLS) to enforce organization-level isolation alongside native Role-Based Access Control (RBAC).
+- **Authentication & SSO**: OpenID Connect (OIDC) and SAML 2.0 single sign-on support built natively into the HttpApi / Gateway layer.
+- **Immutable Audit Logging**: Every administrative action, rule modification, and security override is captured in a cryptographically signed audit ledger.
 
 ## Plugin & SDK Architecture
 
 - **SDKs**: Available for .NET, Python, and JavaScript. They wrap standard OpenTelemetry SDKs, making it easy to integrate AgentWire into existing projects.
 - **Plugins**: AgentWire supports plugins for different LLM providers (OpenAI, Anthropic) and MCP servers. Plugins can provide custom cost calculations or security rules.
+
