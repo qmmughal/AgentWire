@@ -2,9 +2,11 @@ using System;
 
 namespace AgentWire.Core.Entities
 {
-    public class AIPacket
+    public class AIPacket : IOrganizationScoped
     {
         public Guid Id { get; set; } = Guid.NewGuid();
+        public Guid OrganizationId { get; set; }
+        public Guid? ReplayOfPacketId { get; set; }
         public string TraceId { get; set; } = string.Empty;
         public string AgentId { get; set; } = string.Empty;
         public string ModelProvider { get; set; } = string.Empty;

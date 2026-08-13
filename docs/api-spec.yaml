@@ -1,12 +1,151 @@
 openapi: 3.0.3
 info:
   title: AgentWire API
-  version: 1.0.0
-  description: API for ingesting and querying AI packets.
+  version: 2.0.0
+  description: >
+    API for AgentWire: AI traffic ingestion, security scanning, replay,
+    RBAC/SSO-authenticated access, and audit logging. Single organization per
+    self-hosted instance (see docs/architecture.md).
+security:
+  - BearerAuth: []
 paths:
+  /v1/setup:
+    post:
+      summary: One-time bootstrap. Fails with 409 once an organization exists.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [organizationName, adminEmail, adminPassword]
+              properties:
+                organizationName: { type: string }
+                adminEmail: { type: string }
+                adminPassword: { type: string, minLength: 8 }
+      responses:
+        '200':
+          description: Organization, Admin user, and API key created.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  organizationId: { type: string, format: uuid }
+                  adminUserId: { type: string, format: uuid }
+                  adminEmail: { type: string }
+                  apiKey: { type: string, description: "Plaintext, returned once." }
+                  jwt: { type: string }
+        '409': { description: Already set up. }
+
+  /v1/auth/login:
+    post:
+      summary: Local email/password login.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email: { type: string }
+                password: { type: string }
+      responses:
+        '200':
+          description: Success.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token: { type: string }
+        '401': { description: "Invalid credentials (generic - same response for wrong password or unknown email)." }
+
+  /v1/auth/oidc/login:
+    get:
+      summary: Redirects to the configured OIDC Authority. 404 if OIDC isn't configured.
+      security: []
+      responses:
+        '302': { description: Redirect to IdP. }
+        '404': { description: OIDC not configured on this instance. }
+
+  /v1/auth/oidc/complete:
+    get:
+      summary: OIDC callback target. Provisions/finds the local user and issues a JWT.
+      security: []
+      responses:
+        '200':
+          description: Success.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token: { type: string }
+        '400': { description: Provisioning failed (e.g. no email claim on the external identity). }
+
+  /v1/auth/me:
+    get:
+      summary: Current authenticated identity.
+      responses:
+        '200':
+          description: Success.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  userId: { type: string, format: uuid }
+                  email: { type: string }
+                  organizationId: { type: string, format: uuid }
+                  role: { type: string, enum: [Member, Admin] }
+
+  /saml/metadata:
+    get:
+      summary: SP metadata XML - always servable, hand this to your IdP.
+      security: []
+      responses:
+        '200': { description: SAML SP EntityDescriptor XML. }
+
+  /saml/login:
+    get:
+      summary: Redirects to the configured SAML IdP. 404 if no IdP metadata is loaded.
+      security: []
+      responses:
+        '302': { description: Redirect to IdP. }
+        '404': { description: SAML not configured on this instance. }
+
+  /saml/acs:
+    post:
+      summary: SAML Assertion Consumer Service. Validates the signed response and issues a JWT.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties:
+                SAMLResponse: { type: string }
+      responses:
+        '200':
+          description: Success.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token: { type: string }
+        '400': { description: "Invalid SAML response (signature, status, or provisioning failure) - generic message, no internal detail leaked." }
+
   /v1/traces:
     post:
-      summary: Ingest a new AI packet or trace.
+      summary: Ingest a new AI packet or trace. Runs the security scanner inline.
+      security:
+        - ApiKeyAuth: []
       requestBody:
         required: true
         content:
@@ -15,56 +154,278 @@ paths:
               $ref: '#/components/schemas/AIPacket'
       responses:
         '202':
-          description: Packet accepted for processing.
-  /v1/analytics/costs:
+          description: Packet accepted, findings recorded synchronously.
+        '401': { description: Missing, invalid, or revoked API key. }
+
+  /v1/packets:
     get:
-      summary: Retrieve cost analytics for a project.
-      parameters:
-        - name: projectId
-          in: query
-          required: true
-          schema:
-            type: string
-            format: uuid
+      summary: List recent packets (last 100), scoped to the caller's organization.
       responses:
         '200':
-          description: Cost analytics retrieved successfully.
+          description: Success.
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/AIPacket' }
+
+  /v1/packets/{id}:
+    get:
+      summary: Fetch a single packet by id (org-scoped - 404 if it belongs to another org).
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
+      responses:
+        '200':
+          description: Success.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AIPacket' }
+        '404': { description: Not found (including packets that belong to a different organization). }
+
+  /v1/packets/{id}/findings:
+    get:
+      summary: Security findings for a single packet.
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
+      responses:
+        '200':
+          description: Success.
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/SecurityFinding' }
+        '404': { description: Packet not found. }
+
+  /v1/packets/{id}/replay:
+    post:
+      summary: Re-send a stored prompt to a configured OpenAI-compatible provider.
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                model: { type: string }
+                temperature: { type: number }
+      responses:
+        '200':
+          description: Replay succeeded; a new linked packet was created.
           content:
             application/json:
               schema:
                 type: object
                 properties:
-                  totalCost:
-                    type: number
+                  replayId: { type: string, format: uuid }
+                  newPacketId: { type: string, format: uuid }
+                  response: { type: string }
+                  promptTokens: { type: integer }
+                  completionTokens: { type: integer }
+                  latencyMs: { type: number }
+                  cost: { type: number }
+        '404': { description: Packet not found. }
+        '422': { description: "No Replay:BaseUrl configured - not a fake success." }
+        '502': { description: Configured provider errored or timed out. }
+
+  /v1/packets/{id}/replays:
+    get:
+      summary: Replay attempt history for a packet (including failures).
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
+      responses:
+        '200':
+          description: Success.
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/ReplayResult' }
+
+  /v1/security/findings:
+    get:
+      summary: Org-wide security findings, paginated.
+      parameters:
+        - { name: type, in: query, schema: { type: string } }
+        - { name: severity, in: query, schema: { type: string } }
+        - { name: page, in: query, schema: { type: integer, default: 1 } }
+        - { name: pageSize, in: query, schema: { type: integer, default: 50 } }
+      responses:
+        '200':
+          description: Success.
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/SecurityFinding' }
+
+  /v1/analytics/costs:
+    get:
+      summary: Cost rollup by model for the caller's organization.
+      responses:
+        '200':
+          description: Success.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  totalCost: { type: number }
                   breakdownByModel:
                     type: object
-                    additionalProperties:
-                      type: number
+                    additionalProperties: { type: number }
+
+  /v1/audit-log:
+    get:
+      summary: Append-only audit log. Admin-only. No PUT/PATCH/DELETE route exists under this path.
+      parameters:
+        - { name: eventType, in: query, schema: { type: string } }
+        - { name: page, in: query, schema: { type: integer, default: 1 } }
+        - { name: pageSize, in: query, schema: { type: integer, default: 50 } }
+      responses:
+        '200':
+          description: Success.
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/AuditLogEntry' }
+        '403': { description: Caller is not an Admin. }
+
+  /v1/users:
+    get:
+      summary: List users in the caller's organization. Admin-only.
+      responses:
+        '200': { description: Success. }
+    post:
+      summary: Create a user with a temporary password. Admin-only.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, tempPassword, role]
+              properties:
+                email: { type: string }
+                tempPassword: { type: string, minLength: 8 }
+                role: { type: string, enum: [Member, Admin] }
+      responses:
+        '201': { description: Created. }
+        '409': { description: Email already in use. }
+
+  /v1/users/{id}/role:
+    patch:
+      summary: Change a user's role. Admin-only.
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                role: { type: string, enum: [Member, Admin] }
+      responses:
+        '200': { description: Success. }
+        '404': { description: User not found. }
+
+  /v1/apikeys:
+    get:
+      summary: List API keys (prefix + metadata only, never the raw key). Admin-only.
+      responses:
+        '200': { description: Success. }
+    post:
+      summary: Create a new API key. Admin-only.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name: { type: string }
+      responses:
+        '201':
+          description: "Created - the raw key is returned once and never again."
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id: { type: string, format: uuid }
+                  key: { type: string }
+
+  /v1/apikeys/{id}/revoke:
+    post:
+      summary: Revoke an API key. Admin-only.
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
+      responses:
+        '200': { description: Success. }
+        '404': { description: Key not found. }
+
 components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Self-issued JWT (local login, or find-or-provisioned via OIDC/SAML).
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+      description: Per-organization ingestion key, used only by POST /v1/traces.
   schemas:
     AIPacket:
       type: object
       properties:
-        traceId:
-          type: string
-        agentId:
-          type: string
-        modelProvider:
-          type: string
-        modelName:
-          type: string
-        systemPrompt:
-          type: string
-        userPrompt:
-          type: string
-        llmResponse:
-          type: string
-        promptTokens:
-          type: integer
-        completionTokens:
-          type: integer
-        latencyMs:
-          type: number
+        id: { type: string, format: uuid }
+        organizationId: { type: string, format: uuid }
+        replayOfPacketId: { type: string, format: uuid, nullable: true }
+        traceId: { type: string }
+        agentId: { type: string }
+        modelProvider: { type: string }
+        modelName: { type: string }
+        systemPrompt: { type: string }
+        userPrompt: { type: string }
+        llmResponse: { type: string }
+        promptTokens: { type: integer }
+        completionTokens: { type: integer }
+        cost: { type: number }
+        latencyMs: { type: number }
+        createdAt: { type: string, format: date-time }
       required:
         - traceId
         - modelName
+    SecurityFinding:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        aiPacketId: { type: string, format: uuid }
+        findingType: { type: string, enum: [PromptInjection, PiiEmail, PiiPhone, PiiCreditCard, PiiSsn] }
+        severity: { type: string, enum: [Low, Medium, High] }
+        location: { type: string, enum: [SystemPrompt, UserPrompt, LlmResponse] }
+        ruleId: { type: string }
+        matchedTextMasked: { type: string, description: "Masked - never the raw matched text." }
+        createdAt: { type: string, format: date-time }
+    ReplayResult:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        originalPacketId: { type: string, format: uuid }
+        newPacketId: { type: string, format: uuid, nullable: true }
+        status: { type: string, enum: [Pending, Succeeded, Failed] }
+        errorMessage: { type: string, nullable: true }
+        createdAt: { type: string, format: date-time }
+    AuditLogEntry:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        eventType: { type: string }
+        actorEmail: { type: string, nullable: true }
+        targetType: { type: string, nullable: true }
+        targetId: { type: string, nullable: true }
+        createdAt: { type: string, format: date-time }

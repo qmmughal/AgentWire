@@ -6,4 +6,5 @@
   <Project Path="AgentWire.Gateway/AgentWire.Gateway.csproj" />
   <Project Path="AgentWire.Infrastructure/AgentWire.Infrastructure.csproj" />
   <Project Path="AgentWire.Presentation/AgentWire.Presentation.csproj" />
+  <Project Path="../tests/AgentWire.Tests/AgentWire.Tests.csproj" />
 </Solution>

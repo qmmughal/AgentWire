@@ -1,0 +1,20 @@
+[Bb]in/
+[Oo]bj/
+
+# Local dev secrets/state - regenerated on first run, never commit
+*.db
+*.db-shm
+*.db-wal
+jwt-signing-key.txt
+jwt-signing-key.txt.pass
+saml-sp-cert.pfx
+saml-sp-cert.pfx.pass
+
+# Node
+node_modules/
+.next/
+
+# IDE
+.vs/
+.idea/
+*.user
